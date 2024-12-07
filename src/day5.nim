@@ -23,11 +23,30 @@ proc satisfiesRule(entry:Entry, rule:Rule): bool =
 proc satisfiesAllRules(entry:Entry, rules:seq[Rule]): bool = 
   if rules.anyIt(not satisfiesRule(entry, it)): return false
   true
+   
     
 proc correctWrongEntry(wrongentry:Entry, rules:seq[Rule]): Entry =
-  var goodEntry = Entry(entryData:wrongentry.entryData)
+  var goodEntryData = wrongEntry.entryData
   
-  goodEntry
+  # Remove any irrelevant rules
+  let relevantRules = rules.filterIt(goodEntryData.contains(it.before) and goodEntryData.contains(it.after))
+    
+  # Go through the bad entry data.
+  var anySwaps = true
+  while(anySwaps): # Recursively do this to sort all bad elements.
+    anySwaps = false
+    for i in 0..goodEntryData.len-2:
+      var beforeEntry = goodEntryData[i]
+      var afterEntry = goodEntryData[i+1]
+      # Check rules for this pair for rule violation
+      for rule in relevantRules:
+        if(rule.before == afterEntry and rule.after == beforeEntry):
+          # Swap 'em!
+          goodEntryData[i] = afterEntry 
+          goodEntryData[i+1] = beforeEntry
+          anySwaps = true 
+  
+  Entry(entryData:goodEntryData)
   
 
 proc processInputData(inputData:string): (seq[Entry], seq[Rule]) =   
@@ -88,6 +107,7 @@ let testStarOne = starOne("data/day5/test.txt")
 echo "Star One Test OK? ", testStarOne == 143
 echo "Star One on Real Data..."
 echo starOne("data/day5/starOneData.txt")
+echo "Advent of Code 2024, Day 5, Star 2!"
 echo "Testing Star Two..."
 let testStarTwo = starTwo("data/day5/test.txt")
 echo "Star Two Test OK? ", testStarTwo == 123
